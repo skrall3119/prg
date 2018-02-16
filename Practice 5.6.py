@@ -1,8 +1,8 @@
 # takes a list as a parameter and calculates the average of the list.
 def calc_average(score_list):
     total = 0
-    for count in range(len(score_list)):
-        total += score_list[count]
+    for counter in range(len(score_list)):
+        total += score_list[counter]
     average = total / 5
     return average
 
