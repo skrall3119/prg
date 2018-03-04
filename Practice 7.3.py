@@ -28,6 +28,6 @@ girls = read_girls()
 user = get_input()
 
 if user in boys or user in girls:
-	print("Popular name!")
+    print("Popular name!")
 else:
-	print("Not in the list!")
+    print("Not in the list!")
