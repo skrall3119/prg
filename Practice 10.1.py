@@ -1,11 +1,13 @@
 class Person:
 
     def __init__(self, name, address, age, phone):
+        # Attributes
         self.__name = name
         self.__address = address
         self.__age = age
         self.__phone = phone
 
+    # mutator methods
     def set_name(self, name):
         self.__name = name
 
@@ -18,6 +20,7 @@ class Person:
     def set_phone(self, phone):
         self.__phone = phone
 
+    # accessors
     def get_name(self):
         return self.__name
 
@@ -30,6 +33,7 @@ class Person:
     def get_phone(self):
         return self.__phone
 
+# main program
 person1 = Person("Alex", "1797 Nashville Lane", "20", "8153556261")
 person2 = Person("Justin", "1797 Nashville Lane", "17", "8153561722")
 person3 = Person("Sean", "1797 Nashville Lane", "13", "8153556261")
