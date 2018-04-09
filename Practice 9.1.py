@@ -36,7 +36,11 @@ def change(dic):  # allows the user to change either the name or the email addre
         print('email has been changed.')
     print(dic)
 
-dictionary = pickle.load(open("save.p", "rb"))  # opens the pickled document with the list of name/email pairs.
+try:
+    dictionary = pickle.load(open("save.p", "rb"))  # opens the pickled document with the list of name/email pairs.
+except (FileNotFoundError, IOError):
+    print("File not found. Please add a contact to the list then quit to create the file")
+    dictionary = {}
 
 # main program 
 print("Welcome. Here is your list of contacts:")
