@@ -1,7 +1,8 @@
 import question
 
 
-def main():
+# Main method
+def main():  # instantiates question objects
     question1 = question.Question("How many squares are on a Monopoly board?", "A. 60", "B. 20", "C. 80", "D. 40", "D")
     question2 = question.Question("What temperature is the same in Celsius and Fahrenheit?", "A. 100", "B. 40", "C. -40", "D. 0", "C")
     question3 = question.Question("What city does not have an official Disneyland?", "A. San Fransisco", "B. Hong Kong", "C. Tokyo", "D. Moscow", "D")
@@ -20,6 +21,7 @@ def main():
     set_1 = [question1, question2, question3, question4, question5]
     set_2 = [question6, question7, question8, question9, question10]
 
+    # main game program, starting with player one.
     print("Ready, Player 1!: ")
     for queue in set_1:
         print("\n")
@@ -33,7 +35,8 @@ def main():
             print("Correct!")
             p1_score += 1
     print("Player 1's score is: " + str(p1_score) + " out of 5")
-
+    
+    # Now for player two's turn...
     print("Ready, Player 2!: ")
     for query in set_2:
         print("\n")
@@ -47,6 +50,8 @@ def main():
             print("Correct!")
             p2_score += 1
     print("Player 2's score is: " + str(p2_score) + " out of 5")
+    
+    # Tests to see who won, or if the game is a draw.
     if p1_score > p2_score:
         print("Player 1 wins!")
     elif p2_score > p1_score:
