@@ -5,8 +5,10 @@ import collections
 from functools import partial
 
 
+# Root Window
 class CrudMain:
 
+    # Creates all buttons, labels, the button frame, sets the title text, in the root window.
     def __init__(self, master, cust):
         self.master = master
         self.customer_list = cust
@@ -17,16 +19,11 @@ class CrudMain:
         frame.master.title("Contact List Editor")
 
         self.label_1 = Label(frame, text='Contact list').pack(side=LEFT)
-        r = 0
 
-        for key in cust:
-            self.cust_frame.grid_forget()
-            self.button_list[key] = Button(self.cust_frame, text=key, command=partial(self.cust_info, key, r))
-            self.button_list[key].grid(row=1, column=r)
-            r += 1
+        self.update_customers()
 
         self.add_button = Button(frame, text='Add Contact', command=self.add_contact_window)
-        self.update_button = Button(frame, text='Refresh', command=lambda: self.update(self.customer_list))
+        self.update_button = Button(frame, text='Refresh', command=lambda: self.update_customers())
         self.clear_button = Button(frame, text='Clear Contacts', command=lambda: self.clear_list())
 
         self.add_button.pack(anchor='e')
@@ -35,36 +32,45 @@ class CrudMain:
         frame.pack(anchor='nw')
         self.cust_frame.pack(anchor='w')
 
-    def update(self, cust):
-        r = 0
-        for key in cust:
-            self.cust_frame.grid_forget()
-            self.button_list[key] = Button(self.cust_frame, text=key, command=partial(self.cust_info, key, r))
-            self.button_list[key].grid(row=1, column=r)
-            r += 1
-
+    # opens the "add contact" window
     def add_contact_window(self):
-        AddWindow(self.master, self.customer_list)
+        AddWindow(self.master, self, self.customer_list)
         self.cust_frame.update()
 
-    def cust_info(self, key, position):
-        CustInfo(self.master, self.customer_list, key, position, self.button_list)
+    # This function "refreshes" the root window by deleting all the contact buttons, and then replaces them, adding new ones if necessary.
+    def update_customers(self):
+        for widget in self.cust_frame.winfo_children():
+            widget.destroy()
 
+        r = 0
+        for key in self.customer_list:
+            Button(self.cust_frame, text=key, command=partial(self.cust_info, key)) .grid(row=1, column=r)
+            r += 1
+
+    # Opens the customer information window.
+    def cust_info(self, key):
+        CustInfo(self.master, self.customer_list, self, key, self.button_list)
+
+    # Allows the user to totally wipe the entire contact list.
     def clear_list(self):
         for button in self.button_list:
             self.button_list[button].destroy()
         self.customer_list.clear()
         pickle.dump(self.customer_list, open('customer_file.dat', 'wb'))
-        messagebox.showinfo("Status", "Information saved successfully!")
+        messagebox.showinfo("Status", "Information has been wiped!")
 
 
+# Customer information class.
 class CustInfo:
 
-    def __init__(self, master, cust, key, position, button_list):
-
-        self.button_list = button_list
-        self.position = position
+    # initializes all buttons, labels and variables in the Customer Information window. from here the user can either edit or delete the information, as well as close the window.
+    def __init__(self, master, cust, main_window, key, button_list):
         self.master = master
+        self.cust_list = cust
+        self.main_window = main_window
+        self.key = key
+        self.button_list = button_list
+
         self.cust = cust[key]
         self.info_window = Toplevel()
         self.info_window.title("Contact Information")
@@ -89,35 +95,41 @@ class CustInfo:
 
         Button(self.info_window, text='Close', command=self.info_window.destroy).pack(side=LEFT)
         Button(self.info_window, text='Edit', command=self.edit_info).pack(side=LEFT)
-        Button(self.info_window, text='Delete', command=lambda: self.delete_cust(cust, key)).pack(side=LEFT)
+        Button(self.info_window, text='Delete', command=lambda: self.delete_cust(self.cust_list, key)).pack(side=LEFT)
         Button(self.info_window, text='Refresh', command=lambda: self.update_info()).pack(side=LEFT)
 
+    # deletes the information that is being viewed.
     def delete_cust(self, cust, key):
         del cust[key]
-        self.button_list[key].destroy()
         messagebox.showinfo("Item delete", "User has been deleted!")
         pickle.dump(cust, open('customer_file.dat', 'wb'))
+        self.main_window.update_customers()
         self.info_window.destroy()
 
+    # opens the editor to allow changes to be made to the current person.
     def edit_info(self):
-        EditWindow(self.master, self.cust)
+        EditWindow(self.master, self.cust, self, self.cust_list, self.key)
 
+    # makes sure the displayed information is what is stored on the file.
     def update_info(self):
 
-        print(self.cust)
-
-        self.first_name.set(self.cust['first_name'])
-        self.last_name.set(self.cust['last_name'])
-        self.email.set(self.cust['email'])
-        self.address.set(self.cust['address'])
-        self.phone.set(self.cust['phone'])
+        self.first_name.set(self.cust_list[self.key]['first_name'])
+        self.last_name.set(self.cust_list[self.key]['last_name'])
+        self.email.set(self.cust_list[self.key]['email'])
+        self.address.set(self.cust_list[self.key]['address'])
+        self.phone.set(self.cust_list[self.key]['phone'])
 
 
+# The information editor window. Creates two buttons and five entry widgets with the data that was stored on the file.
+#  Changing the first name of a person Creates a new person in the dictionary that takes the rest of the data with it.
 class EditWindow:
 
-    def __init__(self, master, cust):
+    def __init__(self, master, cust, cust_window, cust_list, key):
         self.master = master
         self.cust = cust
+        self.cust_list = cust_list
+        self.cust_window = cust_window
+        self.key = key
         self.edit_window = Toplevel()
 
         self.first_name = StringVar()
@@ -126,13 +138,19 @@ class EditWindow:
         self.address = StringVar()
         self.phone = StringVar()
 
+        self.first_name.set(self.cust['first_name'])
+        self.last_name.set(self.cust['last_name'])
+        self.email.set(self.cust['email'])
+        self.address.set(self.cust['address'])
+        self.phone.set(self.cust['phone'])
+
         Label(self.edit_window, text='First Name: ').grid(row=0, column=0)
         Label(self.edit_window, text='Last Name: ').grid(row=1, column=0)
         Label(self.edit_window, text='Email Address: ').grid(row=2, column=0)
         Label(self.edit_window, text='Street Address: ').grid(row=3, column=0)
         Label(self.edit_window, text='Phone Number:').grid(row=4, column=0)
 
-        Button(self.edit_window, text="Submit", command=lambda: self.save(self.cust)).grid(row=5, column=0)
+        Button(self.edit_window, text="Submit", command=partial(self.save)).grid(row=5, column=0)
         Button(self.edit_window, text='Cancel', command=self.edit_window.destroy).grid(row=5, column=1)
 
         Entry(self.edit_window, textvariable=self.first_name).grid(row=0, column=1)
@@ -141,7 +159,8 @@ class EditWindow:
         Entry(self.edit_window, textvariable=self.address).grid(row=3, column=1)
         Entry(self.edit_window, textvariable=self.phone).grid(row=4, column=1)
 
-    def save(self, customers):
+    # takes the information entered in the entry widgets, stores it in a nested dictionary, and then writes it to a file.
+    def save(self):
 
         name = str(self.first_name.get())
         last = str(self.last_name.get())
@@ -150,22 +169,27 @@ class EditWindow:
         phone = str(self.phone.get())
 
         save = {'first_name': name, 'last_name': last, 'email': email, 'address': address, 'phone': phone}
-        key = save['first_name']
-        customers[key] = save
+        del self.cust
+        new_key = save['first_name']
+        self.cust_list[new_key] = save
 
-        pickle.dump(customers, open('customer_file.dat', 'wb'))
+        pickle.dump(self.cust_list, open('customer_file.dat', 'wb'))
         messagebox.showinfo("Status", "Information saved successfully!")
         self.edit_window.destroy()
+        self.cust_window.update_info()
 
 
+# Creates the Add Window. Allows user to enter a new person, and a button is created on the root window.
 class AddWindow:
 
-    def __init__(self, master, cust):
+    def __init__(self, master, main_window, cust):
         self.master = master
         self.cust = cust
+        self.main_window = main_window
 
         self.add_window = Toplevel()
         self.add_window.title("Add Contact")
+
         Label(self.add_window, text='First Name: ').grid(row=0, column=0)
         Label(self.add_window, text='Last Name: ').grid(row=1, column=0)
         Label(self.add_window, text='Email Address: ').grid(row=2, column=0)
@@ -178,7 +202,7 @@ class AddWindow:
         self.address = StringVar()
         self.phone = StringVar()
 
-        Button(self.add_window, text="Submit", command=lambda: self.save(self.cust)).grid(row=5, column=0)
+        Button(self.add_window, text="Submit", command=lambda: self.save_new(self.cust)).grid(row=5, column=0)
         Button(self.add_window, text='Cancel', command=self.add_window.destroy).grid(row=5, column=1)
 
         Entry(self.add_window, textvariable=self.first_name).grid(row=0, column=1)
@@ -187,7 +211,9 @@ class AddWindow:
         Entry(self.add_window, textvariable=self.address).grid(row=3, column=1)
         Entry(self.add_window, textvariable=self.phone).grid(row=4, column=1)
 
-    def save(self, customers):
+    # almost the same function from the edit window, except all information is first stored in a dictionary.
+    # the value at 'first_name' becomes the key to this dictionary in another dictionary, for all the other contacts entered.
+    def save_new(self, customers):
         name = str(self.first_name.get())
         last = str(self.last_name.get())
         email = str(self.email.get())
@@ -200,8 +226,9 @@ class AddWindow:
         pickle.dump(customers, open('customer_file.dat', 'wb'))
         messagebox.showinfo("Status", "Information saved successfully!")
         self.add_window.destroy()
+        self.main_window.update_customers()
 
-
+# main loop of the program. Checks to see if a file exists, if not, creates a new empty dictionary.
 def main():
     try:
         input_file = open("customer_file.dat", "rb")
